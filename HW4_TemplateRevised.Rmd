@@ -1,0 +1,498 @@
+---
+title: 'ISGB-799V Homework #4: Probability Distributions'
+author: "Hannah Kerin"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+tinytex::install_tinytex(force = TRUE)
+```
+
+## The Geometric Probability Distribution & Weak Law of Large Numbers
+
+A random variable with the geometric probability distribution is associated with an experiment that shares some of the characteristics of a binomial experiment.  This experiment also involves identical and independent trials, each of which can result in one of two outcomes: success or failure.  The probability of success is equal to $p$ and is constant from trial to trial.  However, instead of the number of successes that occur in $n$ trials, the geometric random variable is the number of trials on which the first success occurs.  The geometric probability distribution is often used to model distributions of lengths of waiting times.
+
+Let us roll a $K$ sided die with numbers $1$, . . . , $K$ written on them where $K > 1$.  Each number is equally likely to be rolled.  Let $X$ be a random variable representing the number of rolls needed to get the number $K$ for the first time.  (Note:  number of rolls includes the roll where $K$ appears.)
+
+1. On any roll, what is the probability of rolling the value $K$?
+
+1/k
+
+
+2. What are all of the possible values of $X$?
+
+(1+K)/n
+
+
+3. Create a function with arguments, ```K``` and ```simulations```, with ```simulations``` representing the number of times we should play out this scenario.  Your function should return the number of times the die was rolled in order to get the value ```K```.  (Helpful hint: Try using a while loop)
+
+```{r}
+#create dice function with inputs K and n
+ kdice <- function(k, n){
+ #use if else statement to ensure there are no negative values
+    if(k>0 && n>0){
+    replicate(n, sum(sample(c(1:6),k, replace=TRUE)))
+  }
+  else {
+    print("No number of dices were rolled")
+  }
+}
+
+
+
+print("the number of times the dice was rolled to get to value K=")
+#test the function with value of k=4, n=5
+kdice(4,5)
+```
+
+
+4.  For $K = [2, 6, 12, 15]$ simulate 100 rounds of the scenario and plot each set of results with a bar graph.
+
+```{r}
+
+#set display of graphs
+par(mfrow=c(2,2))
+
+
+#save the function kdice with various given k and n=100 to their own variable
+prob <- kdice(2,100)
+
+d.2 <- kdice(2,100)
+d.6 <- kdice(6,100)
+d.12 <-kdice(12,100)
+d.15<-kdice(15,100)
+#define the paremeters for the graph ie x min x max
+y.max <- ceiling(max(c(barplot(d.2, plot=FALSE), 
+                       barplot(d.6, plot=FALSE), 
+                       barplot(d.12, plot=FALSE),
+                        barplot(d.15, plot=FALSE))))
+x.min <- min(c(d.2, d.6, d.12, d.15))
+x.max <- max(c(d.2, d.6, d.12, d.15))
+# make a bar graphs for all the different values of Ks
+barplot(d.2, ylim=c(0,y.max), xlim=c(x.min, x.max), 
+      main=expression(paste("Dice Roll Func. K=2 N=100  ")), 
+        las=TRUE, col="violetred3")
+## n= 10
+
+barplot(d.6, ylim=c(0,y.max), xlim=c(x.min, x.max), 
+      main=expression(paste("Dice Roll Func. K=6 N=100  ")), 
+        las=TRUE, col="violetred3")
+barplot(d.12, ylim=c(0,y.max), xlim=c(x.min, x.max), 
+      main=expression(paste("Dice Roll Func. K=12 N=100  ")), 
+        las=TRUE, col="violetred3")
+barplot(d.15, ylim=c(0,y.max), xlim=c(x.min, x.max), 
+      main=expression(paste("Dice Roll Func. K=15 N=100  ")), 
+        las=TRUE, col="violetred3")
+
+
+```
+
+
+5.  Repeat question 4 by simulating 100 new rounds of each scenario and plot the results.  Have your results changed?  Please explain how they have changed.  Why might your results be different?
+
+```{r}
+# choose how the graphs are displayed
+par(mfrow=c(2,2))
+#create variables with inputs to the function keeping n the same changing K
+d.2 <- kdice(2,100)
+d.6 <- kdice(6,100)
+d.12 <-kdice(12,100)
+d.15<-kdice(15,100)
+# set parameters ie ymax
+y.max <- ceiling(max(c(barplot(d.2, plot=FALSE), 
+                       barplot(d.6, plot=FALSE), 
+                       barplot(d.12, plot=FALSE),
+                        barplot(d.15, plot=FALSE))))
+x.min <- min(c(d.2, d.6, d.12, d.15))
+x.max <- max(c(d.2, d.6, d.12, d.15))
+#create barplots
+barplot(d.2, ylim=c(0,y.max), xlim=c(x.min, x.max), 
+      main=expression(paste("Dice Roll Func. K=2 N=100  ")), 
+        las=TRUE, col="violetred3")
+## n= 10
+
+barplot(d.6, ylim=c(0,y.max), xlim=c(x.min, x.max), 
+      main=expression(paste("Dice Roll Func. K=6 N=100  ")), 
+        las=TRUE, col="violetred3")
+barplot(d.12, ylim=c(0,y.max), xlim=c(x.min, x.max), 
+      main=expression(paste("Dice Roll Func. K=12 N=100  ")), 
+        las=TRUE, col="violetred3")
+barplot(d.15, ylim=c(0,y.max), xlim=c(x.min, x.max), 
+      main=expression(paste("Dice Roll Func. K=15 N=100  ")), 
+        las=TRUE, col="violetred3")
+# since the simulation changes each times the number of times it takes to reach K changed from the last simmulation to this one
+
+# as K increases the number of rolls for success increases
+```
+
+
+6.  For each combination of ```simulations`` = [100, 1000, 5000, 20000] and $K$ = [2, 6, 12, 15] calculate the average number of rolls required to get $K$.  Show these results in a table where your columns are values of n_sim and your rows are values of $K$.
+
+```{r}
+#assign mean of function outcome to variables
+avg_rolls_1<-mean(kdice(2,100))
+avg_rolls_2<-mean(kdice(6,1000))
+avg_rolls_3<-mean(kdice(12,5000))
+avg_rolls_4<-mean(kdice(15,20000))
+
+#create matrix with the variables created in step 1 
+data_1<-matrix(c(avg_rolls_1, avg_rolls_2, avg_rolls_3, avg_rolls_4), ncol = 1, byrow = TRUE)
+
+
+#create column and row names 
+colnames(data_1)<-c("Mean Dice Rolls to Reach K")
+
+rownames(data_1)<-c("(k,n), (2,100)","(k,n), (6,1000)","(k,n), (12,5000)","(k,n), (15,20000)")
+
+# sassign the matrix data_1 to final and as table
+final<-as.table(data_1)
+
+#display
+final
+```
+
+
+7.  How would you describe a general formula for calculating the average number of rolls?
+
+create a simulation function where the number of rolls to reach K and take the mean of that function.
+
+8.  For $K$ = 6 and ```simulations``` = 1000, estimate the following probabilities using your simulation function:
+
+\begin{table}[htb]
+\centering
+\begin{tabular}{|c|c|c|c|c|c|c|c|}
+\hline
+x        & 1 & 2 & 3 & 4 & 5 & 6 & 7 or Greater \\ \hline
+P(X = x) &   &   &   &   &   &   &              \\ \hline
+\end{tabular}
+\end{table}
+
+```{r}
+
+
+# create function to calculate prob
+prob_func<- function(k,x, n_sim){
+h<-0
+fin<-0
+ #use if else statement to ensure there are no negative values
+    if(k>0 && x>0){
+    h<-replicate(x, sum(sample(c(1:6),k, replace=TRUE)))
+  }
+  else {
+    print("No number of dices were rolled")
+  }
+  fin<-mean(h)/n_sim
+  return(fin) 
+} 
+ # plug into to function and assign to variable. 
+p1<-prob_func(6,2, 1000)
+  
+p1
+p2<-prob_func(6,2,1000)
+  
+p2
+
+p3<-prob_func(6,3,1000)
+  
+p3
+
+p4<-prob_func(6,4,1000)
+  
+p4
+
+p5<-prob_func(6,5,1000)
+  
+p5
+
+p6<-prob_func(6,6,1000)
+  
+p6
+# find x>= 7 prob
+p7<-1-sum(c(p1,p2, p3, p4, p5 ,p6))
+
+p7
+
+```
+
+
+9.  In theory, is the probability $P(X = 500)$ > 0 when $K$ = 6?  Explain.
+
+Yes the probability og P(X=00) >0 when K= 6. mean(kdice(6,500))/n_sim>0
+
+
+10.  Given that the probability mass function for the a geometric distributed random variable $X$ is  $$P(X = x) = P( \overbrace{Fail, Fail,...,Fail}^{x-1}, Success) = qq...qp= q^{x-1}p$$ Use the functions ```dgeom()``` and ```pgeom()``` to calculate the probabilites in question 8.  For the ```x``` arguments, enter the outcomes ```x-1``` and your answer for #1 for the argument prob.  (Hint: Check ?dgeom if you need help)
+
+```{r}
+x<-c(1,2,3,4,5,6) # create a list for all x values 
+geom<-dgeom(x,prob = .166667) # use the dgeom function and assign it to R and since k=6, the probabilty is 1/k=1/6=.16667
+geom
+pgeom(q=7, prob = .16667, lower.tail = FALSE) # use the cumulative geometric probability function and since pgeom is set to less than and we want greater have to add lower.tail=FALSE to make it>= 7.
+
+```
+
+
+11.  Create a figure with two plots side by side: The first plot of the empirical probability mass function estimate based on the data simulated in #8 (histogram is acceptable - use ```prob=TRUE```).  The second plot should plot the theorical probability mass function for our data in #10.
+
+```{r}
+#set how the plots will be displaued
+par(mfrow=c(1,2))
+
+# replicate the kdice funtion with k= 6 n = 1000, 1000 times and assign it to H
+H<-replicate(1000, kdice(6,1000))
+# create a vector assign it to x
+x<-c(1,2,3,4,5)
+#use dgeom with x vector and prob 1/6
+geom_1<- dgeom(x,prob = .166667)
+# set how graphs will be displayed
+par(mfrow=c(1,2))
+#create histogram with variable H for EMF
+hist(H, prob=T, xlab = "Roll Outcomes", main = "EMF")
+
+#create histogram for variable geom_1 to compare EMF with geometric distribution
+hist(geom_1, prob=T, xlab = "Roll Outcomes", main = "Geometric")
+
+```
+
+
+12.  How close are your answers from your simulation to the probabilities from the geometric distribution you just created?  Describe this given what we've learned about the Weak Law of Large Numbers in lecture 8.  What parameters need to change in our function in order for our empirical probabilities to match the theoretical values for $(X=x)$
+
+
+The weak law of large numbers states as the experiment is preformed more times the sample average will approach the expected value. As the simmulations increase the sample mean of our experiement will appraoch the expected vslurd
+The probability from our simmulation are different from the geometric function as our sample size, n was too small we need to increase the sample size and based on the weak law of large numbers we need to increase the number of simulation 
+
+13.  For $K$ = 6, and ```simulations``` = [1 - 5000] (Hint: use a for loop) plot the mean of each sample as a line graph.  Add a horizontal line at the theorical mean (6).  What is your observation of this relationship between n_sim and the mean of our sample?  If your code takes longer than 5 minutes to run you may reduce the simulations to a lower number.  
+
+```{r}
+# assign 6 to K
+K<-6
+
+mean_value<-0
+
+#create mean value vector with for loop
+#change the vector to end at 50 as 5000 took too long and the graph was unreadable 
+for (i in c(1:50)) {
+  
+  mean_value[i]<-mean(kdice(6,i))
+  
+}
+
+barplot(mean_value, las=TRUE, xlab = "N_sims", ylab = "Mean Value", main="n_sim vs Mean Value")
+
+#as the # of simulations increases the difference in mean value lessons
+```
+
+
+14.  For $K$ = 6, what is the probability that it takes more than 12 rolls to roll a 6?
+
+```{r}
+#use pgeom function to find the prob that it takes more than 12 rolls on 6
+#pron=.16667 because 1/6
+
+# as it is greater than not less than we have to add lower.tail= False or subtract pgeom from 1 both will give the same answer
+prob_2<-pgeom(12,.16667, lower.tail = FALSE)
+#display
+prob_2
+```
+
+
+15.  For $K$ = 6, what is the probability that you roll a 6 in your first three rolls?
+
+```{r}
+#use probability addition rule adding the geom function with same probability and differing x value and assign that to variable
+prob_3<-dgeom(0,.16667)+dgeom(1,.16667)+dgeom(2,.16667)
+print("The probability that you will roll a 6 in your first three rolls is ")
+prob_3
+```
+
+
+16.  For $K$ = 6, what is the 95th percentile for number of rolls required to roll a 6?
+
+```{r}
+# use qgeom function to find the 95th percentile of rolls to roll a 6 and assign to variable
+perc<-qgeom(0.95,.16667)
+perc
+```
+
+
+## The Exponential Probability Distribution & Central Limit Theorem
+
+The magnitude of earthquakes in North America can be modeled as having an exponential distribution with mean $\mu$ of 2.4.
+
+For an _exponential distribution_:
+
+**Mean:** $\mathbb{E}[X] = {\lambda}$
+
+**Variance:** $\mathbb{E}[X^2] - (\mathbb{E}[X])^2 = \lambda^2$
+
+18. Simulate 1000 earthquakes and plot the distribution of Richter Scale values (Hint: ```rexp(x, rate = 1/lambda)```).  Let this data represent $X$. Create a histogram of $X$ and describe the shape of this distribution.  How does this differ from the normal distribution?
+
+```{r}
+# make rate 1/ lamda 
+#use rexp function for exponentional distribution
+X<-rexp(n=1000, rate = 1/2.4)
+#create histogram
+hist(X, main="Exponential Curve Richter Scale (mean=2.4)")
+
+#This differs from normal distribution as with normal distribution the values are equal around the the center, whereas with exponential the first value is the largest with decreasing values, and the rate of decrease decreases as the line approaches equilibrium. 
+
+
+```
+
+
+19.  Find the probability that an earthquake occurring in North America will fall between 2 and 4 on the Richter Scale.
+
+```{r}
+# to find probability that an earthquake will fall between 2 and 4  have to use the pexp function with the same rate but subtract m= 4 from m= 2
+pexp(4,1/2.4)-pexp(2,1/2.4)
+```
+
+
+20.  How rare is an earthquake with a Richter Scale value of greater than 9?
+
+```{r}
+
+#to find the probability of greater than 9, use pexp function with rate and 9 and subtract that from 1 
+print("an Earthquake with a Richter value of 9 is this rare, aka this small probability of occuring")
+1-pexp(9,1/2.4)
+```
+
+
+21.  Create a function which will simulate multiple samples drawn from an exponential distribution with $\lambda$ = 2.4 (Hint: ```rexp(x, rate = 1/lambda)``` and return a vector containing the mean values for each of your samples.  Your arguments should be lamba, simulations for the number of simulations per sample, and n (sample size) for the number of samples of size simulations to be created.  
+
+```{r}
+# create function assign to variable with inputs lambda, n, and n_sim
+avg_function_2<-function(lambda,n,n_sim){
+  #use rexp function and assign to X
+  X<-rexp(n, 1/lambda)
+  #create a length for the function
+  vec_mean<-1:n_sim
+  for (i in c(1:n_sim)) { # for function i in vector ranging from 1 to length of n_sim
+    X<-rexp(n, 1/lambda) # create rexp function assgin to X
+    mean(X) #find mean of X
+    vec_mean[i]<-mean(X) # assign the mean(X) to vec_mean[i]
+    
+  }
+  return(vec_mean) # show vec mean
+}
+```
+
+
+22.  Use your function with arguments ```lambda``` = 2.4, ```simulations``` = 1000, ```n``` = 40 to create a vector of sample mean values of Richter Scale readings.  Let $\bar{X}$ represent this data.  Plot a histogram of the data.  Describe the distribution of $\bar{X}$.  Is $\bar{X}$ distributed differently than $X$?
+
+```{r}
+#use the previously created function with inputs lambda =2.4, n=40 and n.sim= 1000 and assign it to a variable 
+richter_vec<-avg_function_2(2.4, 40,1000)
+#create a histogram
+hist(richter_vec, main="Richter Scale where l=2.4, n.sim= 1000, n= 40")
+
+```
+
+
+23.  Calculate the sample mean and sample variance for the data simulated in #18.  Calculate the population variance given $\lambda$ = 2.4.
+
+```{r}
+#assign 2.4 to lambda
+lambda<-2.4
+#define n
+n<-40
+#assign rexp function with inputs to variable
+X<-rexp(n, rate= 1/lambda)
+mean(X) #sample mean
+var(X) #empirical variance
+lambda^2 #theoretical variance
+# for check
+mean(richter_vec)
+#for check
+lambda
+```
+
+
+24.  Create a plot of $\bar{X}$.  Make sure to set ```prob=TRUE``` in the ```hist()``` function.  Include vertical lines for the sample and theoretical mean values (red = sample mean, blue = theoretical mean).
+
+```{r}
+hist(richter_vec, prob=T, xlab = "Magnitude of Earthquake", main = "Distribution of Richter Scale Sample Mean") #create a histogram with the vector I created in question 22
+
+abline(v=mean(richter_vec), col="violetred3") # create a line representing the mean
+
+abline(v=lambda, col="darkblue") # create a line representing lambda
+
+
+```
+
+
+25.  Add lines to our plot of $\bar{X}$ to plot the density for both our simulated sample and theoretical population (Hint: use ```dnorm(x, mean=lambda, sd=(lambda/sqrt(n))``` to calculate theorical population density).  Make sure to set ```prob=TRUE``` in the ```hist()``` function. 
+
+```{r}
+n<-34 #set n to a number >30 for a large enough sample size for normal distribution
+lambda<-2.4 #predefined value of lambda
+density_func_X<- dnorm(richter_vec, mean = lambda/(n)^(1/2) )# formula for SD of population is the sample standard/ sqrt of size n 
+
+#create the histrogram where prob=TRUE
+hist(richter_vec, prob=TRUE, xlab= "Earthqauke Mag.", main= "Normal Distribution")
+#add lines
+#set the min and max for the visual
+xlength<-seq(min(richter_vec), max(richter_vec), length=34)
+ylength<-dnorm(xlength, mean=lambda, sd=lambda/sqrt(n))
+dlength<-dnorm(xlength, mean=mean(richter_vec), sd=lambda/sqrt(n))
+lines(xlength, ylength, col="violetred3")
+lines(xlength, dlength, col="darkblue")
+
+```
+
+
+26.  The Central Limit Theorem states that if you take many repeated samples from a population, and calculate the averages or sum of each one, the collection of those averages will be normally distributed. Does the shape of the distribution of $X$ matter with respect to the distribution of $\bar{X}$?  Is this true for all **any** parent distribution of $\bar{X}$?
+
+
+This is true for any parent distribution and the shape does not matter as the number of repepitions increases the shape will turn to that of a normal distribution
+
+
+
+27.  What will happen to the distribution of $\bar{X}$ if you re-run your function with arguments ```lambda``` = 2.4, ```simulations``` = 10000, ```n``` = 40?  How does the variance of $\bar{X}$ change from our data simulated for $\bar{X}$ in #25?  Create a figure with the histograms (```prob=TRUE```) for both of our $\bar{X}$ sampling distributions.  Explain the difference in the two distributions of $\bar{X}$ (simulations = 1000, simulations = 10000).
+
+```{r}
+#run function with pregiven inputs for lambda, n, and nsim, n sim=10000
+quest_27<-avg_function_2(2.4, 40, 1000) #lambda = 2.4, n = 40, nsim=1000
+var(quest_27) #calcualte the variance
+
+#run functiom with pregiven inputs for lambda, n, and nsim, n sim=10000
+question_27<-avg_function_2(2.4, 40, 10000) #lambda = 2.4, n = 40, nsim=10000
+var(question_27) #calcualte the variance
+
+#with larger number of simmulation the varience changed.
+
+par(mfrow=c(1,2)) # set to display two graphs
+#create the histogram for the two function outputs with differing n_sim
+hist(avg_function_2(2.4,40,1000), probability = TRUE,main = "nsim=1000")
+hist(avg_function_2(2.4,40,10000), probability = TRUE,main = "nsim=10000")
+
+#the distribution where nsim=1000, the distribution range is wider and less even on both sides of the mean whereas where nsim is 10000 the distribution is more narrow and looks closer to a normal distrubtion proving the central limit therum
+```
+
+
+28.  Now explore what will happen to the distribution of $\bar{X}$ if you re-run your function with arguments ```lambda``` = 2.4, ```simulations``` = 10000, ```n``` = 10?  How does the variance of $\bar{X}$ change from our data simulated for $\bar{X}$ in #25?  Create a figure with the histograms (```prob=TRUE```) for our $\bar{X}$ sampling distributions (n = 40, n = 10).  Explain the difference in the two distributions of $\bar{X}$
+
+```{r}
+
+par(mfrow=c(1,2)) # setting to have two graphs side by side
+hist(avg_function_2(2.4,40,10000), probability = TRUE,main = "n=40")
+hist(avg_function_2(2.4,10,10000), probability = TRUE,main = "n=10")
+
+#n=40 has a smaller range of valye spanning from 1-4 s whereas n=10 has a larger range from 0-6 . n=40 has a higher density than n=10. The varience for n=10 >var for n=40
+
+#calculate the varience of each in order to answer the next question
+var(avg_function_2(2.4,40,10000))
+var(avg_function_2(2.4,10,10000))
+
+
+```
+
+
+29. In 3-4 sentences, summarize your findings for questions 26-28.  What role does $n$ (sample size) play in the variance of $\bar{X}$?
+
+
+With a larger n means a smaller variance. As the number of simulations increases the function aporaches normal distribution. More simulations means slightly smaller varience, but the difference is not as big as with n, sample size.
+
+EXTRA CREDIT: Choose a probability distribution that we have not studied in class and repeat the above exercises.
+
+
