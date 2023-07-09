@@ -1,0 +1,290 @@
+---
+title: 'ISGB-799V: Homework #5 - Hypothesis Testing & Confidence Intervals'
+author: "Hannah Kerin"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+x <- read.csv("test_control.csv") #download data as df
+#install needed libraries 
+ library(dplyr)
+library(tidyverse)
+```
+
+### Two-Sample Hypothesis Test for Proportions
+
+An online men's clothing retailer has developed a testing framework for video advertising on YouTube in order to test the effectiveness of the ads on influencing individuals to purchase from their website.
+
+Over the course of 30 days, 600,000 consumers were reached on YouTube.  Half of the individuals reached with ads on YouTube were served Public Service Announcement ads, while the other half were served ads for the retailer.  
+
+Incrementality testing, also referred to as “Uplift Modeling” or “Incremental Sales Lift”, is a test that measures the impact of a single variable on an individual’s behavior. For digital display or video marketing, it is most commonly used to measure the impact of a branded digital ad (Test Group) against a Public Service Announcement (PSA) ad (Control Group). The lift is measured as the percent difference between the two.
+
+Incremental lift indicates the impact of a particular (digital) advertising tactic on sales – the holy grail of advertising. It is possible to calculate but incremental testing is expensive (budget must still be spent on PSA placebo ads) and subject to many pitfalls unless executed carefully.  For the purposes of this assignment we will assume that all individuals were not exposed to any other advertising for the retailer during the 30 day testing period.
+
+The goal of our test is to determine whether the conversion rate of the test group is different than the conversion rate of our control group.  Conversion rate in this case is defined as $$\textrm{Conversion Rate} = \Bigg(\frac{ \textrm{Individuals in Group Who Purchased}}{\textrm{Total Individuals in Group}}\Bigg)$$
+
+Our hypothesis will test whether the difference in conversion rate or proportion for the test group and control group is statistically significant when $\alpha$ = 0.01.$$H_0 : p_{test} - p_{control} = 0$$ $$H_a : p_{test} - p_{control} \neq 0$$
+
+The data we will be using for the following exercises is __test_control.csv__.  This data represents a simple random sample of 15,000 individuals served PSA ads and 15,000 individuals served a branded digital video ads.  The data also contains an indicator for whether an individual purchased from our retailer after viewing the ad.
+
+1. What variables are available in our data set?  List out the column names and describe the data type of each variable.
+
+```{r}
+dim(x) # there are 30,000 rows and 6 columns 
+colnames(x) # get data names 
+#the column names are user_id, exposed, gender, age, income, purchased
+print("The data type of each column is chr, besides purchased is int ")
+str(x) # get data type of column using the str function
+```
+
+2. How are our test and control samples defined in our data set?
+Exposed 
+
+Test is defined as 	
+	Test Group (Exposed), Control is dedined as control
+
+3. What proportion of individuals from the test group purchased on the retailer's website after viewing an ad?  What proportion of individuals from the control group purchased on the retailer's website after viewing an ad?
+
+```{r}
+#explore data
+head(x)
+tail(x)
+# create data frame for exposed and control
+test<- x  %>%
+  filter( x$exposed =="Test Group (Exposed)")
+
+control<- x  %>%
+  filter(x$exposed=="Control Group (PSA)")
+
+
+#create filter and assugn to variable for those who purchased from test group
+testpurch<-test %>%
+  filter(test$purchased==1)
+
+#explore unique values from those who purchased
+cat<-unique(control$purchased)
+
+#calculate the proportion in the control group
+purch_control<-length(which(control$purchased==1))
+total_control<-nrow(control)
+print("the proportion for purchase in the control group =")
+cont_conv<-purch_control/total_control
+cont_conv
+#calculate the proportion in the test group
+purch_test<-length(which(test$purchased==1))
+total_test<-nrow(test)
+print("the proportion for purchase in the test group =")
+test_conv<-purch_test/total_test
+test_conv
+```
+
+
+4. For each of the variables [$gender$, $age$, $income$] create a bar plot to explore the distribution of demographic information in our samples. 
+
+```{r}
+#create barplot for gender
+gender <- table(x$gender)
+barplot(gender, main="Gender Distribution" ,
+   xlab="Gender")
+
+```
+
+```{r}
+ #create boxplot for age
+age <- table(x$age)
+barplot(age, main="Age Distribution" ,
+   xlab="Age")
+```
+
+```{r}
+#create boxplot for gender
+income <- table(x$income)
+barplot(income, main="Income Distribution" ,
+   xlab="Income")
+```
+
+
+5.  Create a figure with two bar plots (one for the test group and one for the control group) for $age$.  Describe the difference in the distribution between the test and control groups. Compare the percentage of each category between our test and control groups.
+
+```{r}
+#format the graphs
+par(mfrow = c(1, 2))
+#create boxplot for age for test for initial exploration
+test_age <- table(test$age)
+barplot(test_age, main="Age Distribution in Test" ,
+   xlab="Age")
+#create box plot for age for control group
+control_age <- table(control$age)
+bp<-barplot(control_age, main="Age Distribution in Control" ,
+   xlab="Age")
+#the test has closer to normal distribution with even distribution around the mean whereas the control is left skewed 
+
+#create barplot with percentages and showing control and test
+ggplot(x, aes(x = exposed, fill = age)) +
+  geom_bar(position = "stack") +
+  labs(x = "Group", y = "Count", fill = "age")
+#use age and fill
+ggplot(x, aes(x = age, fill = exposed)) +
+  geom_bar(position = "dodge", alpha = 0.8) +
+  scale_fill_manual(values = c("#F8766D", "#00BFC4")) +
+  geom_text(stat = "count", aes(label = paste0(round(..count../sum(..count..)*100), "%"), y = ..count..),
+            position = position_dodge(width = 0.9), vjust = -0.5) +
+  labs(title = "Distribution of Age", x = "Age", y = "Count") +
+  theme_minimal()
+
+# the control group has a larger younger population whereas the experimental group as an older population
+```
+
+
+6.  Create a figure with two bar plots (one for the test group and one for the control group) for $gender$.  Describe the difference in the distribution between the test and control groups. Add the percentage of each category to your plots.  Why might this variable be important to our analysis? 
+
+```{r}
+#download libraries 
+library(ggplot2)
+library(scales)
+
+# create bar plots with percentage use gender and exposed
+ggplot(x, aes(x = gender, fill = exposed)) +
+  geom_bar(position = "dodge", alpha = 0.8) +
+  scale_fill_manual(values = c("#F8766D", "#00BFC4")) +
+  geom_text(stat = "count", aes(label = paste0(round(..count../sum(..count..)*100), "%"), y = ..count..),
+            position = position_dodge(width = 0.9), vjust = -0.5) +
+  labs(title = "Distribution of Gender", x = "Gender", y = "Count") +
+  theme_minimal()
+#both control and test have the same proportion of female to male 
+```
+
+
+7.  Create a figure with two bar plots (one for the test group and one for the control group) for $income$.  Describe the difference in the distribution between the test and control groups. Compare the percentage of each category between our test and control groups.
+
+```{r}
+library(tidyr)
+library(stringr)
+# create bar plots with percentage use gender and exposed
+ggplot(x, aes(x = income, fill = exposed)) +
+  geom_bar(position = "dodge", alpha = 0.8) +
+  scale_fill_manual(values = c("#F8766D", "#00BFC4")) +
+  geom_text(stat = "count", aes(label = paste0(round(..count../sum(..count..)*100), "%"), y = ..count..),
+            position = position_dodge(width = 0.9), vjust = -0.5) +
+  labs(title = "Distribution of Income", x = "income", y = "Count") +
+  theme_minimal()
+
+#control has greater percentage of lower income whereas test has greater percentage of higher income which makes sense as test has higher percentage of those who are older and older people tend to earn more income.
+```
+
+
+8.  How might the differences in the distributions of the categorical variables analyzed in #5 - #7 impact our analysis?  Is it possible that our two samples may represent different types of shoppers?
+
+Control sample is supposed to mimic the categorical qualties of the test, this way one can see if the effect of the test is more likely correlated rather than attributed to external factors. Since the distribution of the income and age is quite different in the control and the test it will be hard to determine for certain whether the test was more sucessful or whether the results can be contributed to the different salaries and age.
+
+#### Hypothesis Test
+
+9.  What is the difference in the conversion rate for the test and control groups?
+
+```{r}
+cr_diff<-test_conv-cont_conv #take the difference in the conversin rate which the number of purchases over total users
+cr_diff #display
+
+# display test and control conversion rate for future questions
+test_conv
+cont_conv
+
+nrow(control)
+nrow(test)
+```
+
+
+The confidence interval for the difference between two proportions (when n > 30) is defined as $$p_{test} - p_{control} \pm z_{\alpha/2}\sqrt{\frac{p_{test} \times (1-p_{test})}{n_{test}}+  \frac{p_{control} \times (1-p_{control})}{n_{control}} }$$ 
+
+10.  Using the equation above, write a function to calculate the confidence interval for the difference between two proportions.  Your function should include three arguments: p1, p2, n1, n2 and Z.  Your function should return the confidence interval for the difference in two proportions at a given confidence level (in our example, Z = 2.575 when $\alpha$ = 0.01)  Round your results to the first five decimal places.
+
+```{r}
+#create function using p1 p2 n1 n2 Z
+conf_function<-function(p1,p2, n1, n2, Z){
+se<-sqrt((p1*(1-p1)))/n1 + (p2*(1-p2)/n2)
+prop_diff<-p1-p2
+conf_i<-c(prop_diff-Z*se, prop_diff+Z*se)
+  return(round(conf_i,5)) #return the confindence interval rounded to 5 decimal places
+  
+}
+```
+
+
+11.  Calculate the confidence interval for the difference between the conversion rates for our test and control groups when $\alpha$ = 0.01 (Z = 2.575) using your function.  Does this confidence interval include zero?  What are the implications for the difference between two means when the confidence interval does not include zero?
+
+```{r}
+# don't forget to answer the last question in plain text after your code - not as a comment.
+
+
+# test conv0.01206667 p1
+# control conv 0.008066667 p2
+
+conf_function(0.01206667, 0.008066667, 1500, 1500,2.575)
+
+#The implications of the difference of the two means that do not include zero it suggests that the change in the means is statistically significant. If the confindence interval includes zero one cannot say for certain one cannot say for certain that true difference in the population means
+```
+
+
+12.  Similar to the ```t.test()``` function in R, the ```prop.test()``` function can be used for testing the null hypothesis that the proportions (probabilities of success) in several groups are the same, or that they equal certain given values.  A chi-square test for equality of two proportions is exactly the same test as a z-test (chi-squared distribution with one degree of freedom is just that of a normal deviate, squared). What are the arguments for the function ```prop.test()```?
+
+```{r}
+# don't forget to answer the last question in plain text after your code - not as a comment.
+
+#The prop test function is used to preform hypotheisis testing for one. to two proportions in a binomial distribution.  The choice to use a prop test function over z test depends on the nature of the problem, the sample size, and assumptions for the test. Prop.test has an advantage when there is a small sample size and with proportions close to 0 or 1
+```
+
+
+13.  Noting that the arguments ```x``` and ```n``` require vectors of values, use the ```prop.test()``` function to test our hypothesis that there is a statistically significant difference between the conversion rates of our test and control groups.  
+
+```{r} 
+#create two vectors for x, and n showing total trials and successes for control and test
+
+#find total trials for success for trial and control
+L<-nrow(test)
+M<-nrow(control)
+
+
+#find number of sucesses
+Q<-length(which(test$purchased==1))
+R<-length(which(control$purchased==1))
+
+
+#create vector for prop test
+X<-c(Q,R) #Sucesses of each trial
+N<-c(L,M) #total number of trials
+
+#preform prop test
+prop.test(X,N)
+
+# There is a difference in the conversion rate of test and control. The test rate = .012067 control=.008067
+
+#find the difference on the conversion value
+.012067-.008067
+
+#the difference between these two values is .004 and since we are using a 95% confidence interval and .004<.05 the difference in the conversion rate between the test and control is not statistically significant. 
+
+#Also since the P-value is <.05 we can reject the null hypothesis
+```
+
+
+14.  Interpet each output of ```prop.test```.  Explain your p-value in the context of our hypothesis.  Is the difference in the conversion rates for the test and control groups statistically significant?
+
+Since the p_value is approxmiately .0006 and we are using a 99% confindence interval, we can reject the null hypothesis. .0006<.01. The difference between the control and test is not statistically significant since it is less than <.01
+
+15.  Use the function ```pchisq(x, df=1)``` to try to understand the __X-squared__ score value in the output of ```prop.test()```.  What do the "p" functions for distributions calculate in R?  Subtract the value calculated using ```pchisq``` from 1.  What does this value represent?
+
+```{r}
+# don't forget to answer the last question in plain text after your code - not as a comment.
+1-pchisq(6.665,df=1) # test 
+1-pchisq(purch_test,df=1)#control 
+
+# gives the value of observing less than 6.675. 1- gives the p-value
+```
+
+
+#### Conclusion
+
+16.  In a few sentences, describe your interpretation of the results we found in this assignment.  How might the demographic data we observed for our test and control groups impact the difference in the two conversion rates?  Do you still believe that the results of our hypothesis test is valid?  Justify your answer.
+
+Based on the data we can reject the null hypothesis at 99%confindence interval and the difference in conversion rates between the test and control group is not statistically significant. The demographic data can impact the conversion rate as this data the control and test data had different demographic makeup which would mean we would have to redo our test with a control and test group that are closer related to each other. I believe the results of this hypothesis test should be taken with a grain of salt and more analysis on the methods of the data being collected should be looked into in order to determine whether this sample adequqatly represents the population and there are minimal sampling errors. I would not make any pertinent decisions based on this test until they can redo the makeup of the test and control groups. 
